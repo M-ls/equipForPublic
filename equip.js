@@ -99,7 +99,7 @@ const process = async () => {
             parseInt(item.Level) >= level &&
             item.SubType == headers.subtypeID[i] &&
             item.MapBanEquipItemMask != 1 &&
-            item.Name != "测试装备";
+            !item.Name.includes("测试");
 
         // const filterMap = {
         //     0: (item) => commonFilter(item) && item.IsPVEEquip == 1 && item.DetailType == "5",
@@ -123,7 +123,7 @@ const process = async () => {
             }
             default: {
                 equips[headers.subtype[i]] = headers.list[i].filter(
-                    (item) => commonFilter(item) && item.IsPVEEquip == 1 && item.Name != "测试装备"
+                    (item) => commonFilter(item) && item.IsPVEEquip == 1
                 );
             }
         }
@@ -180,6 +180,7 @@ const process = async () => {
         let subType = headers.enchantSubtype[x];
         let subID = headers.subtypeID[x];
         //最终表头 ID type1 type2 Strength
+        //不动态判断了 写死了 有直升装备埋坑坑人的
         let lastRequires = [
             subType + "ID",
             "显示名称",
@@ -232,7 +233,13 @@ const process = async () => {
                 (settings.schoolSet.some((item) => secEquips[obj][i]["Name"].includes(item)) ? "·套装" : "") +
                 (settings.craftSet.some((item) => secEquips[obj][i]["Name"].includes(item)) ? "·切糕" : "") +
                 (secEquips[obj][i]["SkillID"] > 0 && subID == "7" ? "·特效" : "") +
-                (eventSkillID == "4877" ? "·水特效" : "") +
+                (eventSkillID == "4877"
+                    ? "·水特效"
+                    : secEquips[obj][i]["Name"].includes(settings.cw)
+                    ? "·橙武"
+                    : secEquips[obj][i]["Name"].includes(settings.xcw)
+                    ? "·小橙武"
+                    : "") +
                 "（" +
                 (secEquips[obj][i]["加速"] > 0 ? "加速" : "") +
                 (secEquips[obj][i]["会效"] > 0 ? "双会" : secEquips[obj][i]["会心"] > 0 ? "会心" : "") +
@@ -250,9 +257,14 @@ const process = async () => {
             lasEquips[subType][i][lastEquipHeaders[subType][10]] = secEquips[obj][i]["无双"] || "0";
             lasEquips[subType][i][lastEquipHeaders[subType][11]] = secEquips[obj][i]["破招"] || "0";
             lasEquips[subType][i][lastEquipHeaders[subType][12]] = secEquips[obj][i]["体质"] || "0";
-            lasEquips[subType][i][lastEquipHeaders[subType][13]] = secEquips[obj][i]["Diamond1"];
-            lasEquips[subType][i][lastEquipHeaders[subType][14]] = secEquips[obj][i]["Diamond2"];
-            lasEquips[subType][i][lastEquipHeaders[subType][15]] = secEquips[obj][i]["Diamond3"];
+            lasEquips[subType][i][lastEquipHeaders[subType][13]] = !["5"].includes(subID)
+                ? secEquips[obj][i]["Diamond1"] || "0"
+                : undefined;
+            lasEquips[subType][i][lastEquipHeaders[subType][14]] = !["5", "4", "7", "1"].includes(subID)
+                ? secEquips[obj][i]["Diamond2"] || "0"
+                : undefined;
+            lasEquips[subType][i][lastEquipHeaders[subType][15]] =
+                subID == "0" ? secEquips[obj][i]["Diamond3"] || "0" : undefined;
             lasEquips[subType][i][lastEquipHeaders[subType][16]] = secEquips[obj][i]["MaxStrengthLevel"];
 
             lasEquips[subType][i][lastEquipHeaders[subType][17]] = subID == "0" ? eventSkillID : undefined;
