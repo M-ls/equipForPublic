@@ -99,7 +99,7 @@ const process = async () => {
             parseInt(item.Level) >= level &&
             item.SubType == headers.subtypeID[i] &&
             item.MapBanEquipItemMask != 1 &&
-            !item.Name.includes("测试");
+            (settings.debugs == 0 ? (!item.Name.includes("测试")) : 1);
 
         // const filterMap = {
         //     0: (item) => commonFilter(item) && item.IsPVEEquip == 1 && item.DetailType == "5",
@@ -111,19 +111,19 @@ const process = async () => {
         switch (headers.subtypeID[i]) {
             case "0": {
                 equips[headers.subtype[i]] = headers.list[i].filter(
-                    (item) => commonFilter(item) && item.IsPVEEquip == 1 && item.DetailType == "5"
+                    (item) => commonFilter(item) && item.EquipUsage == 1 && item.DetailType == "5"
                 );
                 break;
             }
             case "5": {
                 equips[headers.subtype[i]] = headers.list[i].filter(
-                    (item) => commonFilter(item) && (item.IsPVEEquip == 1 || item.MaxStrengthLevel == "8")
+                    (item) => commonFilter(item) && (item.EquipUsage == 1 || item.MaxStrengthLevel == "8")
                 );
                 break;
             }
             default: {
                 equips[headers.subtype[i]] = headers.list[i].filter(
-                    (item) => commonFilter(item) && item.IsPVEEquip == 1
+                    (item) => commonFilter(item) && item.EquipUsage == 1
                 );
             }
         }
@@ -236,10 +236,10 @@ const process = async () => {
                 (eventSkillID == "4877"
                     ? "·水特效"
                     : secEquips[obj][i]["Name"].includes(settings.cw)
-                    ? "·橙武"
-                    : secEquips[obj][i]["Name"].includes(settings.xcw)
-                    ? "·小橙武"
-                    : "") +
+                        ? "·橙武"
+                        : secEquips[obj][i]["Name"].includes(settings.xcw)
+                            ? "·小橙武"
+                            : "") +
                 "（" +
                 (secEquips[obj][i]["加速"] > 0 ? "加速" : "") +
                 (secEquips[obj][i]["会效"] > 0 ? "双会" : secEquips[obj][i]["会心"] > 0 ? "会心" : "") +
