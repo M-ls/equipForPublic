@@ -3,8 +3,8 @@
     "level": "",
     "enchantMinID": "",
     "slEquip": "",
-    "cw": "",
-    "xcw": "",
+    "cw": [],
+    "xcw": [],
     "schoolSet": [],
     "craftSet": [],
     "debugs": 0

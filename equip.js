@@ -37,19 +37,7 @@ const process = async () => {
 
     //装备类型字典 这是个对象套数组
     const headers = {
-        subtype: [
-            "maozi",
-            "shangzhuang",
-            "yaodai",
-            "hushou",
-            "xiazhuang",
-            "xiezi",
-            "anqi",
-            "wuqi",
-            "xianglian",
-            "yaozhui",
-            "jiezhi",
-        ],
+        subtype: ["maozi", "shangzhuang", "yaodai", "hushou", "xiazhuang", "xiezi", "anqi", "wuqi", "xianglian", "yaozhui", "jiezhi"],
         list: [armor, armor, armor, armor, armor, armor, weapon, weapon, trinket, trinket, trinket],
         subtypeID: ["3", "2", "6", "10", "8", "9", "1", "0", "4", "7", "5"],
         enchantSubtype: ["帽子", "上装", "腰带", "护手", "下装", "鞋子", "暗器", "武器", "项链", "腰坠", "戒指"],
@@ -85,7 +73,7 @@ const process = async () => {
     //整理源表头过滤
     let requires = ["ID", "Name", "Level", "MaxStrengthLevel", "Diamond1", "Diamond2", "Diamond3"];
     //新增Param属性表头和文字属性表头
-    for (let i = 1; i <= 12; i++) {
+    for (let i = 1; i <= 16; i++) {
         requires.push("attribModify" + i);
         requires.push("attribParam" + i);
     }
@@ -99,7 +87,8 @@ const process = async () => {
             parseInt(item.Level) >= level &&
             item.SubType == headers.subtypeID[i] &&
             item.MapBanEquipItemMask != 1 &&
-            (settings.debugs == 0 ? (!item.Name.includes("测试")) : 1);
+            (settings.debugs == 1 || !item.Name.includes("测试"));
+        //debug把这个判定设为1,非debug把这个判定设为不包含"测试"
 
         // const filterMap = {
         //     0: (item) => commonFilter(item) && item.IsPVEEquip == 1 && item.DetailType == "5",
@@ -111,20 +100,16 @@ const process = async () => {
         switch (headers.subtypeID[i]) {
             case "0": {
                 equips[headers.subtype[i]] = headers.list[i].filter(
-                    (item) => commonFilter(item) && item.EquipUsage == 1 && item.DetailType == "5"
+                    (item) => commonFilter(item) && (item.EquipUsage == 1 || item.MaxStrengthLevel == "8") && item.DetailType == "5"
                 );
                 break;
             }
             case "5": {
-                equips[headers.subtype[i]] = headers.list[i].filter(
-                    (item) => commonFilter(item) && (item.EquipUsage == 1 || item.MaxStrengthLevel == "8")
-                );
+                equips[headers.subtype[i]] = headers.list[i].filter((item) => commonFilter(item) && (item.EquipUsage == 1 || item.MaxStrengthLevel == "8"));
                 break;
             }
             default: {
-                equips[headers.subtype[i]] = headers.list[i].filter(
-                    (item) => commonFilter(item) && item.EquipUsage == 1
-                );
+                equips[headers.subtype[i]] = headers.list[i].filter((item) => commonFilter(item) && item.EquipUsage == 1);
             }
         }
         //附魔
@@ -147,7 +132,7 @@ const process = async () => {
                 }
             }
             //属性
-            for (let i = 1; i <= 12; i++) {
+            for (let i = 1; i <= 16; i++) {
                 let attr = attrib_object[equip[`Magic${i}Type`]];
                 if (attr && attr.ID != 0) {
                     equip["attribModify" + i] = attr.ModifyType;
@@ -168,9 +153,7 @@ const process = async () => {
     // secEquips = equips.map((positions) => positions.filter((item) => parseInt(item.攻击) > 0 && !item.精简));
     // 二次过滤 equips
     for (i = 0; i < headers.subtype.length; i++) {
-        secEquips[headers.subtype[i]] = equips[headers.subtype[i]].filter(
-            (item) => parseInt(item.攻击) > 0 && !item.精简
-        );
+        secEquips[headers.subtype[i]] = equips[headers.subtype[i]].filter((item) => parseInt(item.攻击) > 0 && !item.精简);
     }
     wf.outputJSON("./output/rawData.json", secEquips);
 
@@ -233,13 +216,14 @@ const process = async () => {
                 (settings.schoolSet.some((item) => secEquips[obj][i]["Name"].includes(item)) ? "·套装" : "") +
                 (settings.craftSet.some((item) => secEquips[obj][i]["Name"].includes(item)) ? "·切糕" : "") +
                 (secEquips[obj][i]["SkillID"] > 0 && subID == "7" ? "·特效" : "") +
+                //(eventSkillID == "4877" ? "·水特效" : secEquips[obj][i]["Name"].includes(settings.cw) ? "·橙武" : secEquips[obj][i]["Name"].includes(settings.xcw) ? "·小橙武" : "") +
                 (eventSkillID == "4877"
                     ? "·水特效"
-                    : secEquips[obj][i]["Name"].includes(settings.cw)
-                        ? "·橙武"
-                        : secEquips[obj][i]["Name"].includes(settings.xcw)
-                            ? "·小橙武"
-                            : "") +
+                    : settings.cw.some((item) => secEquips[obj][i]["Name"].includes(item))
+                    ? "·橙武"
+                    : settings.xcw.some((item) => secEquips[obj][i]["Name"].includes(item))
+                    ? "·小橙武"
+                    : "") +
                 "（" +
                 (secEquips[obj][i]["加速"] > 0 ? "加速" : "") +
                 (secEquips[obj][i]["会效"] > 0 ? "双会" : secEquips[obj][i]["会心"] > 0 ? "会心" : "") +
@@ -257,22 +241,15 @@ const process = async () => {
             lasEquips[subType][i][lastEquipHeaders[subType][10]] = secEquips[obj][i]["无双"] || "0";
             lasEquips[subType][i][lastEquipHeaders[subType][11]] = secEquips[obj][i]["破招"] || "0";
             lasEquips[subType][i][lastEquipHeaders[subType][12]] = secEquips[obj][i]["体质"] || "0";
-            lasEquips[subType][i][lastEquipHeaders[subType][13]] = !["5"].includes(subID)
-                ? secEquips[obj][i]["Diamond1"] || "0"
-                : undefined;
-            lasEquips[subType][i][lastEquipHeaders[subType][14]] = !["5", "4", "7", "1"].includes(subID)
-                ? secEquips[obj][i]["Diamond2"] || "0"
-                : undefined;
-            lasEquips[subType][i][lastEquipHeaders[subType][15]] =
-                subID == "0" ? secEquips[obj][i]["Diamond3"] || "0" : undefined;
+            lasEquips[subType][i][lastEquipHeaders[subType][13]] = !["5"].includes(subID) ? secEquips[obj][i]["Diamond1"] || "0" : undefined;
+            lasEquips[subType][i][lastEquipHeaders[subType][14]] = !["5", "4", "7", "1"].includes(subID) ? secEquips[obj][i]["Diamond2"] || "0" : undefined;
+            lasEquips[subType][i][lastEquipHeaders[subType][15]] = subID == "0" ? secEquips[obj][i]["Diamond3"] || "0" : undefined;
             lasEquips[subType][i][lastEquipHeaders[subType][16]] = secEquips[obj][i]["MaxStrengthLevel"];
 
             lasEquips[subType][i][lastEquipHeaders[subType][17]] = subID == "0" ? eventSkillID : undefined;
             lasEquips[subType][i][lastEquipHeaders[subType][18]] = subID == "0" ? eventSkillLevel : undefined;
-            lasEquips[subType][i][lastEquipHeaders[subType][19]] =
-                subID == "7" ? secEquips[obj][i]["SkillID"] || "0" : undefined;
-            lasEquips[subType][i][lastEquipHeaders[subType][20]] =
-                subID == "5" ? secEquips[obj][i]["MaxExistAmount"] || "0" : undefined;
+            lasEquips[subType][i][lastEquipHeaders[subType][19]] = subID == "7" ? secEquips[obj][i]["SkillID"] || "0" : undefined;
+            lasEquips[subType][i][lastEquipHeaders[subType][20]] = subID == "5" ? secEquips[obj][i]["MaxExistAmount"] || "0" : undefined;
             lasEquips[subType][i][lastEquipHeaders[subType][21]] = secEquips[obj][i]["Name"].includes(settings.slEquip)
                 ? "2"
                 : String(Number(!secEquips[obj][i]["元气"] > 0));
@@ -301,13 +278,9 @@ const process = async () => {
                 [displayName]: enchants[obj][i]["AttriName"].replace(/\d+/g, enchants[obj][i]["Attribute1Value1"]),
                 [attribute]: enchants[obj][i]["Attribute1ID"],
                 [value]: enchants[obj][i]["Attribute1Value1"],
-                [score]: enchants[obj][i]["Score"]||"0",
+                [score]: enchants[obj][i]["Score"] || "0",
             };
-            if (
-                !enchantAttribNeed[enchants[obj][i]["Attribute1ID"]].some((item) =>
-                    enchants[obj][i]["AttriName"].includes(item)
-                )
-            ) {
+            if (!enchantAttribNeed[enchants[obj][i]["Attribute1ID"]].some((item) => enchants[obj][i]["AttriName"].includes(item))) {
                 console.warn("注意附魔 " + enchants[obj][i]["ID"] + " 描述与属性可能不符");
             }
         }
