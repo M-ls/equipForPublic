@@ -301,7 +301,7 @@ const process = async () => {
                 [displayName]: enchants[obj][i]["AttriName"].replace(/\d+/g, enchants[obj][i]["Attribute1Value1"]),
                 [attribute]: enchants[obj][i]["Attribute1ID"],
                 [value]: enchants[obj][i]["Attribute1Value1"],
-                [score]: enchants[obj][i]["Score"],
+                [score]: enchants[obj][i]["Score"]||"0",
             };
             if (
                 !enchantAttribNeed[enchants[obj][i]["Attribute1ID"]].some((item) =>
